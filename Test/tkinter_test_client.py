@@ -10,7 +10,7 @@ server_ip = "localhost"
 port = 4700
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((server_ip, port))
+client_socket.connect((server_ip, port)) # 연결 요청
 
 def sendmsg(sock):
     pass
@@ -19,10 +19,9 @@ def recvmsg(sock):
         msg = sock.recv(1024)
         if msg:
             print(msg.decode())
-            # message = ent.get()
             message = msg.decode()
             chat_text.config(state=tk.NORMAL)
-            chat_text.insert(tk.END, "상대방: " + message + "\n")
+            chat_text.insert(tk.END, "" + message + "\n")
             chat_text.config(state=tk.DISABLED)
             ent.delete(0, tk.END)
 
@@ -35,26 +34,24 @@ def update():
         label.image = photo
     window.after(10, update)
 
-def pressButton(input):
-    print(input, "버튼 눌림")
-    btn.config(text="버튼")
+def pressButton():
     msg = ent.get()
     print("text_get()으로 가져온 값 : ", msg)
 
     message = ent.get()
-    chat_text.config(state=tk.NORMAL)
-    chat_text.insert(tk.END, "나: " + message + "\n")
-    chat_text.config(state=tk.DISABLED)
+    # chat_text.config(state=tk.NORMAL)
+    # chat_text.insert(tk.END, "나: " + message + "\n")
+    # chat_text.config(state=tk.DISABLED)
     ent.delete(0, tk.END)
 
     client_socket.send(message.encode())
-
 
 
 window = tk.Tk()
 window.geometry("1150x530")
 window.title("client 테스트창")
 window.option_add("*Font","고딕체 12")
+
 # 웹캠
 cap = cv2.VideoCapture(0)
 # 웹캠 라벨
@@ -72,12 +69,12 @@ ent.place(x=650, y=480)
 btn = tk.Button(window)
 btn.place(x=1040, y=475)
 btn.config(text="버튼")
-btn.config(command=partial(pressButton, 5))
+btn.config(command=pressButton)
 
 reciever = threading.Thread(target=recvmsg, args=(client_socket,))
 reciever.start()
 
 
-update()
+# update()
 
 window.mainloop()

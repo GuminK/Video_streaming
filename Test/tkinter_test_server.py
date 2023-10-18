@@ -11,27 +11,43 @@ import imutils
 HOST = ''
 PORT = 4700
 
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind((HOST, PORT))
-server_socket.listen(5)
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # ipv4, tcp방식
+server_socket.bind((HOST, PORT)) # 거의 튜플형식으로 들어감
+server_socket.listen(5) # 5명까지 들어올 수 있다
 
 print("Listening . . .")
 
+group = []
+user = []
+test = []
 
-def recvmsg(sock):
+def sendmsg(message):
+    for conn in test:
+        conn.send(message.encode())
+
+
+def recvmsg(sock):  # 데이터를 받아와서 문자열? 화면에 뿌려줌
     while True:
-        msg = sock.recv(1024)
+        msg = sock.recv(1024) # 1024바이트만큼 데이터를 받아와
+        id = ''
+        for user in group: # # {'msg':'어쩌구구', 'id':1}, {'socket':'권ㄷ', 'id':1}
+            if(user['socket'] == sock):
+                id = str(user['id'])
+                break
+
         if msg:
-            print(msg.decode())
-            # message = ent.get()
+            string_a = id + "번 사용자: "
+            print(msg.decode())  # decode()
             message = msg.decode()
+            sdmsg = string_a + message
+            sendmsg(sdmsg)
             chat_text.config(state=tk.NORMAL)
-            chat_text.insert(tk.END, "상대방: " + message + "\n")
+            chat_text.insert(tk.END, string_a + message + "\n")
             chat_text.config(state=tk.DISABLED)
             ent.delete(0, tk.END)
 
 
-def update():
+def update(): # 웹캠 정보 받아와서 화면에 뿌리기
     ret, frame = cap.read()
     if ret:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -43,10 +59,13 @@ def update():
 
 def pressButton():
     message = ent.get()
-    chat_text.config(state=tk.NORMAL)
-    chat_text.insert(tk.END, "나: " + message + "\n")
-    chat_text.config(state=tk.DISABLED)
-    ent.delete(0, tk.END)
+    if message:
+        chat_text.config(state=tk.NORMAL)
+        chat_text.insert(tk.END, "나: " + message + "\n")
+        chat_text.config(state=tk.DISABLED)
+        ent.delete(0, tk.END)
+        message = "서버 : " + message
+        sendmsg(message)
 
 
 window = tk.Tk()
@@ -74,33 +93,32 @@ btn.config(command=pressButton)
 # btn.config(command=partial(pressButton, 5))
 
 
-update()
+update()  # 웹캠 내 화면에만 뿌려줌 ㅋㅋ
 
 
-def connclient():
+
+def connect_client():
     while True:
-        conn, (conn_host, conn_port) = server_socket.accept()
-        if conn:
-            reciever = threading.Thread(target=recvmsg, args=(conn,))
-            reciever.start()
+        client_socket, addr = server_socket.accept()  # 연결을 허용한다
+        size = len(group)
+        user = {'socket':client_socket, 'id':size + 1} # {'socket':'김구민', 'id':1}, {'socket':'권ㄷ', 'id':1}
+        group.append(user)
 
-            # if cap.isOpened():
-            #     img, frame = cap.read()
-            #     frame = imutils.resize(frame, width=640)
-            #     frame_bytes = pickle.dumps(frame)
-            #     msg = struct.pack("Q",len(frame_bytes)) + frame_bytes
-            #     conn.sendall(msg)
-            #
-            #     cv2.imshow('s', frame)
-            #     key = cv2.waitKey(1) & 0xFF
-            #     if key == ord('q'):
-            #         conn.close()
+        test.append(client_socket)
+
+
+        if client_socket:
+            print(addr[0], addr[1] , "연결 되었음")
+            reciever = threading.Thread(target=recvmsg, args=(client_socket,))  # 채팅 받아오는거 클라이언트한테서
+            reciever.start()  # 스레드 시작
+
 
         print("연결 되었음")
 
 
-conn_thread = threading.Thread(target=connclient)
+conn_thread = threading.Thread(target=connect_client)  #
 conn_thread.start()
+
 
 
 window.mainloop()
