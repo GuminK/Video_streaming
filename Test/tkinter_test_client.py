@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 from functools import partial
 import threading
 import socket
+import numpy as np
 
 # 127.0.0.1
 server_ip = "localhost"
@@ -11,6 +12,19 @@ port = 4700
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((server_ip, port)) # 연결 요청
+
+
+def recvall(sock, count):
+    # 바이트 문자열
+    buf = b''
+    while count:
+        newbuf = sock.recv(count)
+        if not newbuf: return None
+        buf += newbuf
+        count -= len(newbuf)
+    return buf
+
+
 
 def sendmsg(sock):
     pass

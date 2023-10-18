@@ -7,6 +7,9 @@ import socket
 import struct
 import pickle
 import imutils
+import numpy as np
+import json
+
 
 HOST = ''
 PORT = 4700
@@ -20,6 +23,8 @@ print("Listening . . .")
 group = []
 user = []
 test = []
+
+
 
 def sendmsg(message):
     for conn in test:
@@ -46,14 +51,38 @@ def recvmsg(sock):  # 데이터를 받아와서 문자열? 화면에 뿌려줌
             chat_text.config(state=tk.DISABLED)
             ent.delete(0, tk.END)
 
+encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 
-def update(): # 웹캠 정보 받아와서 화면에 뿌리기
+header = []
+header.append(0x20)
+
+def update():
     ret, frame = cap.read()
     if ret:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         photo = ImageTk.PhotoImage(image=Image.fromarray(frame))
         label.config(image=photo)
         label.image = photo
+
+        result, frame = cv2.imencode('.jpg', frame, encode_param)
+        data = np.array(frame)
+        stringData = bytes(data)  # str(data)
+
+        # jsonData = { 'data' : data, 'flag' : 'img' }
+        # body = json.dumps(jsonData)
+        #
+        # leng = len(body)
+        #
+        # message = bytearray(header)
+        # ## 보낼 때는 python 3.1 ~에서 슬 수 있는 .to_bytens사용
+        # message += bytearray(leng.to_bytes(2, byteorder="big"))
+        # message += bytes(body, 'utf-8')
+        #
+        # for user in group:
+        #     user['socket'].sendall(message)
+        for user in group:
+            user['socket'].sendall((str(len(stringData))).encode().ljust(16) + stringData)
+
     window.after(10, update)
 
 
