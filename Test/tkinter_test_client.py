@@ -1,29 +1,26 @@
-import tkinter as tk
+import tkinter as tk  # client
 import cv2
 from PIL import Image, ImageTk
 from functools import partial
 import threading
 import socket
-import numpy as np
 
 # 127.0.0.1
 server_ip = "localhost"
 port = 4700
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((server_ip, port)) # 연결 요청
+client_socket.connect((server_ip, port))  # 연결 요청
+
+print("연결 되었습니다 . . .")
 
 
-def recvall(sock, count):
-    # 바이트 문자열
-    buf = b''
-    while count:
-        newbuf = sock.recv(count)
-        if not newbuf: return None
-        buf += newbuf
-        count -= len(newbuf)
-    return buf
 
+def chat_text_upload(message):
+    chat_text.config(state=tk.NORMAL)
+    chat_text.insert(tk.END, message + "\n")
+    chat_text.config(state=tk.DISABLED)
+    ent.delete(0, tk.END)
 
 
 def sendmsg(sock):
@@ -53,10 +50,8 @@ def pressButton():
     print("text_get()으로 가져온 값 : ", msg)
 
     message = ent.get()
-    # chat_text.config(state=tk.NORMAL)
-    # chat_text.insert(tk.END, "나: " + message + "\n")
-    # chat_text.config(state=tk.DISABLED)
-    ent.delete(0, tk.END)
+
+    chat_text_upload("나: "+message)
 
     client_socket.send(message.encode())
 
